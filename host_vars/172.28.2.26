@@ -1,0 +1,4 @@
+hostname: cl-rhs-0096
+ip: 172.28.2.26
+consul_extra: ""
+consul_master_ip: 172.28.2.21

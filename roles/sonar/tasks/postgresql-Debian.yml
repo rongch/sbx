@@ -1,0 +1,13 @@
+- name: ensure packages are installed -- Debian
+  apt: name={{item}}
+  with_items:
+    - postgresql
+    - libpq-dev
+    - python-psycopg2
+  tags: postgresql_server
+  when: ansible_os_family == "Debian"
+
+- name: cron stop postgresql
+  cron: name="stop postgresql service" minute="58" hour="19" job="/usr/sbin/service postgresql stop"
+- name: cron start postgresql
+  cron: name="start postgresql service" minute="36" hour="5" job="/usr/sbin/service postgresql start"

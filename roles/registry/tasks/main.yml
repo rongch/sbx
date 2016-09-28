@@ -1,0 +1,86 @@
+- meta: flush_handlers
+  tags: [registry]
+
+- name: Include OS-specific variables.
+  include_vars: "{{ansible_os_family}}.yml"
+  tags: [registry]
+
+- name: directories are present
+  file:
+    dest: "{{ item }}"
+    state: directory
+  with_items: "{{directories}}"
+  when: registry_server is defined
+  tags: [registry]
+
+- name: files are present
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode }}"
+  with_items: "{{registry_server_files}}"
+  register: config_result
+  when: registry_server is defined
+  tags: [registry]
+
+- name: node directories are present
+  file:
+    dest: "{{ item }}"
+    state: directory
+  with_items: "{{node_directories}}"
+  when: registry_server is undefined and ansible_os_family == 'Debian'
+  tags: [registry_clent]
+
+- name: node files are present
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode }}"
+  with_items: "{{node_files}}"
+  register: cert_copied
+  when: registry_server is undefined
+  tags: [registry_client]
+
+- name: Obsolete Docker init.d service is removed
+  file:
+    dest: /etc/init.d/docker
+    state: absent
+  when: ansible_os_family=='Debian'
+  tags: [registry]
+
+- name: add registry domain name to /etc/hosts file
+  lineinfile: dest=/etc/hosts line="127.0.0.1 www.my-registry.com"
+  when: registry_server is defined
+  tags: [registry]
+
+- name: add registry domain name to /etc/hosts file
+  lineinfile: dest=/etc/hosts line="10.100.199.210 www.my-registry.com"
+  when: registry_server is undefined
+  tags: [registry]
+
+- name: update-ca-certificate
+  shell: update-ca-certificates
+  when: ansible_os_family=='Debian'
+  register: cert_updated
+  tags: [registry]
+
+- name: update-ca-certificate
+  shell: update-ca-trust force-enable && update-ca-trust extract
+  when: ansible_os_family=='RedHat'
+  register: cert_updated
+  tags: [registry]
+
+- name: Docker Service is restarted
+  service:
+    name=docker
+    state=restarted
+  when: cert_updated|changed
+  tags: [registry]
+
+- name: Docker-registry Service is restarted
+  service:
+    name=docker-registry
+    state=restarted
+  when: registry_server is defined
+  tags: [registry]
+

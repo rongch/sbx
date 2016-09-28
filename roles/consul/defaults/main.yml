@@ -1,0 +1,20 @@
+consul_directories:
+  - /etc/consul.d
+  - /data/consul
+  - /data/consul/logs
+  - /data/consul/scripts
+  - /data/consul/config
+
+files: [
+  { src: "consul", dest: "/usr/local/bin/consul", mode: "0755" },
+  { src: "consul-template", dest: "/usr/local/bin/consul-template", mode: "0755" },
+  { src: "ui", dest: "/data/consul", mode: "0744" },
+  { src: "mem.sh", dest: "/data/consul/scripts/mem.sh", mode: "0755" },
+  { src: "disk.sh", dest: "/data/consul/scripts/disk.sh", mode: "0755" },
+  { src: "jq", dest: "/usr/local/bin/jq", mode: "0755" }
+]
+
+templates: [
+  { src: "consul.conf.j2", dest: "/etc/init/consul.conf", mode: "0644" },
+  { src: "redeploy_service.sh.j2", dest: "/data/consul/scripts/redeploy_service.sh", mode: "0755" }
+]

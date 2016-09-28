@@ -1,0 +1,8 @@
+- name: ensure packages are installed -- Debian
+  apt: name={{item}}
+  with_items:
+    - postgresql
+    - libpq-dev
+    - python-psycopg2
+  tags: postgresql_server
+  when: ansible_os_family == "Debian"

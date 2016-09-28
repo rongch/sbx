@@ -1,0 +1,22 @@
+---
+# handlers file for ansible-nexus
+
+# Variable setup.
+- name: Include OS-Specific variables
+  include_vars: "clm_1_20.yml"
+  when: nexus_version="1.20.0-02"
+
+- name: Include OS-Specific variables
+  include_vars: "clm_1_15.yml"
+  when: nexus_version="1.15.0-02"
+
+- name: 'start nexus_clm'
+  service: name={{nexus_service}} state=started
+  tags:
+    - init
+
+- name: 'restart nexus_clm'
+  service: name={{nexus_service}} state=restarted
+
+- name: 'reload nginx'
+  service: name=nginx state=reloaded

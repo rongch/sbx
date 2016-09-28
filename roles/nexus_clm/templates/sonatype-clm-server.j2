@@ -1,0 +1,69 @@
+#!/bin/sh
+
+# The following comment lines are used by the init setup script like the
+# chkconfig command for RedHat based distributions. Change as
+# appropriate for your installation.
+
+### BEGIN INIT INFO
+# Provides:          clm-server
+# Required-Start:    $local_fs $remote_fs $network $time $named
+# Required-Stop:     $local_fs $remote_fs $network $time $named
+# Default-Start:     3 5
+# Default-Stop:      0 1 2 6
+# Short-Description: Sonatype clm-server service
+# Description:       Start the Sonatype clm-server service
+### END INIT INFO
+
+SONATYPE_CLM_SERVER_HOME={{nexus_home}}
+VERSION={{nexus_version}}
+JAVA_OPTIONS="-Xmx1024m -XX:MaxPermSize=128m"
+# The user ID which should be used to run the CLM server
+# # IMPORTANT - Make sure that the user has the required privileges to write into the CLM work directory.
+RUN_AS_USER=clmserver
+
+do_start()
+{
+    cd $SONATYPE_CLM_SERVER_HOME
+    #su -m $RUN_AS_USER -c "java -jar $JAVA_OPTIONS sonatype-clm-server-$VERSION.jar server  config.yml  > /dev/null 2>&1 &"
+    java -jar $JAVA_OPTIONS sonatype-clm-server-$VERSION.jar server  config.yml  > /dev/null 2>&1 &
+    echo "Started Sonatype CLM Server"
+}
+
+do_console()
+{
+    cd $SONATYPE_CLM_SERVER_HOME
+    java -jar $JAVA_OPTIONS sonatype-clm-server-$VERSION.jar server config.yml
+}
+
+do_stop()
+{
+    pid=`ps aux | grep sonatype-clm-server | grep -v grep | awk '{print $2}'`
+    kill $pid
+    echo "Killed Sonatype CLM Server - PID $pid"
+}
+
+do_status()
+{
+#pid=`ps aux | grep sonatype-clm-server | grep -v grep | awk '{print $2}' > /dev/null 2>&1`
+echo "If a process is listed, then sonatype-clm-server is running"
+ps ax | grep java | grep sonatype-clm-server
+#echo "service PID = ${pid}"
+}
+
+do_usage()
+{
+    echo "Usage: clm [console|start|stop]"
+}
+
+case $1 in
+console) do_console
+;;
+start) do_start
+;;
+stop) do_stop
+;;
+status) do_status
+;;
+*) do_usage
+;;
+esac

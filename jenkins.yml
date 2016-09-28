@@ -1,0 +1,17 @@
+#- hosts: jenkins
+- hosts: jenkins_dynamic_node
+  remote_user: ec2-user
+  sudo: yes
+  vars_files:
+    - vars/os
+    - vars/mount
+  roles:
+    #- nfs_client
+    #- docker
+    #- java
+    - oracle_java8
+    #- jenkins
+  environment:
+    http_proxy: http://id\pass@your.proxy.name:port
+    https_proxy: http://id\pass@your.proxy.name:port
+

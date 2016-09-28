@@ -1,0 +1,13 @@
+---
+### first approach
+#- name: install apache maven - Debian
+#  apt: name=maven state=installed
+#  when: ansible_os_family == 'Debian'
+
+#- include: setup-RedHat.yml
+#  when: ansible_os_family == 'RedHat'
+
+
+### second approach
+- include: maven.yml
+  #when: ansible_os_family == 'RedHat'

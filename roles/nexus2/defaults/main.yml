@@ -1,0 +1,48 @@
+ports:
+  - '80:80'
+
+directories:
+  - /data/nginx/conf.d
+  - /data/nginx/includes
+  - /data/nginx/logs
+  - /data/nginx/upstreams
+  - /data/nginx/templates
+  - /data/nginx/servers
+
+volumes:
+  - /data/nginx/conf.d:/etc/nginx/conf.d
+  - /data/nginx/includes:/etc/nginx/includes
+  - /data/nginx/upstreams:/etc/nginx/upstreams
+  - /data/nginx/servers:/etc/nginx/servers
+  - /data/nginx/logs:/var/log/nginx
+
+templates: [
+  {src: 'services.conf.j2', dest: '/data/nginx/conf.d/services.conf'}
+]
+
+nginx_proxy: True
+nexus_download_dir: "/tmp"
+
+# OSS version:
+#nexus_version: "2.12.1-01"
+#nexus_version: "latest"
+#nexus_package: "nexus-{{ nexus_version }}-bundle.tar.gz"
+#nexus_download_url: "http://download.sonatype.com/nexus/oss/{{ nexus_package }}"
+
+# Pro version:
+#nexus_download_url: "https://download.sonatype.com/downloads/products/nexus/nexus-professional-bundle-latest.tar.gz"
+#nexus_package: "nexus-professional-bundle-latest.tar.gz"
+#nexus_version: "latest"
+nexus_version: "2.11.4-01"
+nexus_package: "nexus-professional-{{nexus_version}}-bundle.tar.gz"
+nexus_download_url: "http://download.sonatype.com/nexus/professional-bundle/{{ nexus_package }}"
+
+nexus_installation_dir: "/opt"
+nexus_home: "{{ nexus_installation_dir }}/nexus"
+#nexus_working_dir: "/var/nexus"
+nexus_port: 9999
+nexus_create_os_user: true
+nexus_os_user: "nexus"
+nexus_create_os_group: "{{ nexus_create_os_user | bool }}"
+nexus_os_group: "nexus"
+nexus_os_user_shell: "/bin/bash"

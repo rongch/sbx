@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- {{ ansible_managed }} -->
+<Server port="{{ bitbucket_server_port }}" shutdown="SHUTDOWN">
+    <Listener className="org.apache.catalina.core.AprLifecycleListener" SSLEngine="on"/>
+    <Listener className="org.apache.catalina.core.JreMemoryLeakPreventionListener"/>
+    <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener"/>
+    <GlobalNamingResources>
+        <Resource name="UserDatabase" auth="Container" type="org.apache.catalina.UserDatabase" description="User database that can be updated and saved" factory="org.apache.catalina.users.MemoryUserDatabaseFactory" pathname="conf/tomcat-users.xml"/>
+    </GlobalNamingResources>
+    <Service name="Catalina">
+        <Connector port="{{ bitbucket_connector_port }}" protocol="HTTP/1.1" connectionTimeout="20000" useBodyEncodingForURI="true" redirectPort="8443" compression="on" compressableMimeType="text/html,text/xml,text/plain,text/css,application/json,application/javascript,application/x-javascript"{% if bitbucket_proxy_name and bitbucket_scheme in ["http", "https"] %} proxyName="{{ bitbucket_proxy_name }}"{% if bitbucket_scheme == "http" %} scheme="http" proxyPort="80"{% elif bitbucket_scheme == "https" %} scheme="https" proxyPort="443" secure="true"{% endif %}{% endif %}/>
+        <Engine name="Catalina" defaultHost="localhost">
+            <Realm className="org.apache.catalina.realm.LockOutRealm">
+                <Realm className="org.apache.catalina.realm.UserDatabaseRealm" resourceName="UserDatabase"/>
+            </Realm>
+            <Host name="localhost" appBase="webapps" unpackWARs="true" autoDeploy="true" xmlValidation="false" xmlNamespaceAware="false">
+                <Context docBase="${catalina.home}/atlassian-bitbucket" path="{{ bitbucket_context_path or '' }}" reloadable="false" useHttpOnly="true"/>
+            </Host>
+        </Engine>
+    </Service>
+</Server>

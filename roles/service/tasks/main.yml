@@ -1,0 +1,154 @@
+- meta: flush_handlers
+  tags: [service]
+
+- name: Compose directory is present
+  file:
+    dest: "{{ compose_config_dir }}/{{ alias }}{{ container_name }}"
+    state: directory
+  tags: [service]
+
+- name: Compose template is present
+  template:
+    src: "{{ container_name }}.yml.j2"
+    dest: "{{ compose_config_dir }}/{{ alias }}{{ container_name }}/docker-compose.yml.ctmpl"
+  register: result
+  tags: [service]
+
+- include: apply-service-template.yml
+
+- name: DB container is pulled
+  shell: docker-compose pull db
+  args:
+    chdir: "{{ compose_config_dir }}/{{ alias }}{{ container_name }}"
+  environment:
+    DOCKER_HOST: tcp://0.0.0.0:2375
+  when: has_db is defined
+  tags: [service]
+
+- name: DB container is running
+  shell: docker-compose up -d --no-recreate db
+  args:
+    chdir: "{{ compose_config_dir }}/{{ alias }}{{ container_name }}"
+  environment:
+    DOCKER_HOST: tcp://0.0.0.0:2375
+  when: has_db is defined
+  register: result
+  tags: [service]
+
+- include: apply-service-template.yml
+
+- name: Color is retrieved from Consul
+  consul_kv:
+    action: get
+    key: "services/{{ alias }}{{ container_name }}/color"
+  register: container_color
+  ignore_errors: yes
+  tags: [service]
+
+- name: Set color
+  set_fact:
+    container_color: "{{ container_color.value[0].Value }}"
+  when: container_color|success
+  ignore_errors: yes
+  tags: [service]
+
+- name: Set new color to blue
+  set_fact:
+    container_new_color: blue
+    container_color: green
+  when: container_color != "blue"
+  tags: [service]
+
+- name: Set new color to green
+  set_fact:
+    container_new_color: green
+    container_color: blue
+  when: container_color == "blue"
+  tags: [service]
+
+- name: Container is pulled
+  shell: docker-compose pull {{ container_new_color }}
+  args:
+    chdir: "{{ compose_config_dir }}/{{ alias }}{{ container_name }}"
+  environment:
+    DOCKER_HOST: tcp://0.0.0.0:2375
+  tags: [service]
+
+- name: Container is stopped
+  shell: docker-compose stop {{ container_new_color }}
+  args:
+    chdir: "{{ compose_config_dir }}/{{ alias }}{{ container_name }}"
+  environment:
+    DOCKER_HOST: tcp://0.0.0.0:2375
+  tags: [service]
+
+- name: Container is removed
+  shell: docker-compose rm -f {{ container_new_color }}
+  args:
+    chdir: "{{ compose_config_dir }}/{{ alias }}{{ container_name }}"
+  environment:
+    DOCKER_HOST: tcp://0.0.0.0:2375
+  tags: [service]
+
+- name: Container is up
+  shell: docker-compose scale {{ container_new_color }}={{ service_instances }}
+  args:
+    chdir: "{{ compose_config_dir }}/{{ alias }}{{ container_name }}"
+  environment:
+    DOCKER_HOST: tcp://0.0.0.0:2375
+  tags: [service]
+
+- name: Simulate testing
+  shell: sleep 15
+  tags: [service]
+
+- debug: var=services/{{ alias }}{{ container_name }}/color
+
+- name: Color is updated
+  consul_kv:
+    key: services/{{ alias }}{{ container_name }}/color
+    value: "{{ container_new_color }}"
+    action: put
+  tags: [service]
+
+- name: nginx server template is present
+  template:
+    src: nginx-server.conf.j2
+    dest: /data/nginx/servers/{{ nginx_conf_name }}.conf
+  tags: [service]
+
+- name: nginx Consul templates are present
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.ctmplDest }}"
+  with_items: nginx_templates
+  tags: [service]
+
+- name: nginx Consul templates are applied
+  shell: >
+    consul-template \
+      -consul localhost:8500 \
+      -template "{{ item.ctmplDest }}:{{ item.dest }}:docker kill -s HUP nginx" \
+      -once
+  with_items: nginx_templates
+  tags: [service]
+
+- name: Consul configs are present
+  template:
+    src: consul_service.json.j2
+    dest: /etc/consul.d/service-{{ alias }}{{ container_name }}.json
+  register: health_result
+  tags: [service]
+
+- name: Consul is restarted
+  shell: killall -HUP consul
+  when: health_result|changed
+  tags: [service]
+
+- name: Old container is stopped
+  shell: docker-compose stop {{ container_color }}
+  args:
+    chdir: "{{ compose_config_dir }}/{{ alias }}{{ container_name }}"
+  environment:
+    DOCKER_HOST: tcp://0.0.0.0:2375
+  tags: [service]

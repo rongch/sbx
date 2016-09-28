@@ -1,0 +1,3 @@
+nfsmount: "{{ nfs_client_mount_point }}"
+nfsserver: "{{ nfs_server_ip }}"
+nfspath: "{{ nfs_server_mount }}"

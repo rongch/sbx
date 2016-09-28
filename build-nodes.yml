@@ -1,0 +1,22 @@
+#- hosts: jenkins_node
+- hosts: jenkins_dynamic_node
+  remote_user: ec2-user
+  #remote_user: vagrant
+  sudo: yes
+  vars:
+    git_install_from_source: true
+    git_install_path: /usr/local
+
+  pre_tasks:
+    - name: remove built-in git
+      yum: name=git state=absent
+      when: ansible_os_family == 'RedHat'
+  roles:
+    - git_latest
+    - maven
+    - oracle_java8
+    - nodejs
+
+  environment:
+    http_proxy: http://id:pass@your.proxy.name:port
+    https_proxy: http://id:pass@your.proxy.name:port

@@ -1,0 +1,8 @@
+---
+- name: restart bitbucket
+  service:
+    name: "bitbucket"
+    state: "restarted"
+
+- name: reload nginx
+  service: name=nginx state=reloaded

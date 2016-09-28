@@ -1,0 +1,6 @@
+hostname: my-registry
+ip: 172.28.2.21
+#consul_master_ip: 172.28.2.21
+swarm_master: true
+registry_server: true
+consul_extra: -server -bootstrap-expect 1 -ui-dir /data/consul/ui

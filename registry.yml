@@ -1,0 +1,14 @@
+- hosts: registry
+  remote_user: ec2-user
+  vars_files:
+    - vars/proxy
+  sudo: yes
+  roles:
+    - docker
+    - compose
+    - registry
+
+  environment:
+    http_proxy: http://id\pass@your.proxy.name:port
+    https_proxy: http://id\pass@your.proxy.name:port
+

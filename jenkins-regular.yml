@@ -1,0 +1,47 @@
+- hosts: jenkins_master
+  remote_user: ec2-user
+  #remote_user: vagrant
+  vars_files:
+    - vars/os
+    - vars/mount
+  sudo: yes
+  vars:
+    git_install_from_source: true
+    git_install_path: /usr/local
+
+  pre_tasks:
+    - set_fact:
+        service_cmd: "/sbin/service"
+      when: ansible_os_family == 'RedHat'
+    - set_fact:
+        service_cmd: "/usr/sbin/service"
+      when: ansible_os_family == 'Debian'
+    - name: remove built-in git
+      yum: name=git state=absent
+      when: ansible_os_family == 'RedHat'
+
+  roles:
+    - git_latest
+    #- nfs_client
+    #- oracle_java8
+    #- jenkins_enterprise
+    #- { role:
+    #      cron_jobs,
+    #      cron_jobs: [
+    #        {
+    #          minute: "35",
+    #          hour: "5",
+    #          command: "{{service_cmd}}",
+    #          args: "jenkins start"
+    #        },
+    #        {
+    #          minute: "58",
+    #          hour: "19",
+    #          command: "{{service_cmd}}",
+    #          args: "jenkins stop"
+    #        }
+    #      ]
+    #  }
+  environment:
+    http_proxy: http://id\pass@your.proxy.name:port
+    https_proxy: http://id\pass@your.proxy.name:port

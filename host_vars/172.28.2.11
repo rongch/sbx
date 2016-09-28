@@ -1,0 +1,4 @@
+ip: 172.28.2.11
+nfs_server_ip: 172.28.2.22
+jenkins_hostname: 172.28.2.11
+

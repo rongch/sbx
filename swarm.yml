@@ -1,0 +1,13 @@
+- hosts: swarm
+  remote_user: ec2-user
+  sudo: yes
+  vars_files:
+    - vars/proxy
+  roles:
+    - docker
+    - swarm
+
+  environment:
+    http_proxy: http://id\pass@your.proxy.name:port
+    https_proxy: http://id\pass@your.proxy.name:port
+

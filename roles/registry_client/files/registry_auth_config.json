@@ -1,0 +1,8 @@
+{
+	"auths": {
+		"https://www.my-registry.com": {
+			"auth": "cm9uZzpyb25n",
+			"email": ""
+		}
+	}
+}

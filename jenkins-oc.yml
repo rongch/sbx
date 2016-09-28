@@ -1,0 +1,40 @@
+- hosts: jenkins_oc
+  remote_user: ec2-user
+  #remote_user: vagrant
+  vars_files:
+    - vars/os
+    - vars/mount
+  sudo: yes
+
+  pre_tasks:
+    - set_fact:
+        service_cmd: "/sbin/service"
+      when: ansible_os_family == 'RedHat'
+    - set_fact:
+        service_cmd: "/usr/sbin/service"
+      when: ansible_os_family == 'Debian'
+
+  roles:
+    - nfs_client
+    - oracle_java8
+    - jenkins_oc
+    - { role:
+          cron_jobs,
+          cron_jobs: [
+            {
+              minute: "35",
+              hour: "5",
+              command: "{{service_cmd}}",
+              args: "jenkins-oc start"
+            },
+            {
+              minute: "58",
+              hour: "19",
+              command: "{{service_cmd}}",
+              args: "jenkins-oc stop"
+            }
+          ]
+      }
+  environment:
+    http_proxy: http://id\pass@your.proxy.name:port
+    https_proxy: http://id\pass@your.proxy.name:port

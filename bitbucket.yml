@@ -1,0 +1,58 @@
+- hosts: bitbucket
+  serial: 1
+  remote_user: ec2-user
+  #remote_user: vagrant
+  sudo: yes
+  vars:
+    git_install_from_source: true
+    git_install_path: /usr/local
+    domain_crt: stash
+    domain_key: stash
+  pre_tasks:
+    - name: remove built-in git
+      yum: name=git state=absent
+      when: ansible_os_family == 'RedHat'
+    - set_fact:
+        service_cmd: "/sbin/service"
+      when: ansible_os_family == 'RedHat'
+    - set_fact:
+        service_cmd: "/usr/sbin/service"
+      when: ansible_os_family == 'Debian'
+
+  roles:
+    - git_latest
+    - oracle_java8
+    - nginx_proxy
+    - bitbucket
+    - { role:
+          cron_jobs,
+          cron_jobs: [
+            {
+              minute: "36",
+              hour: "5",
+              command: "{{service_cmd}}",
+              args: "bitbucket start"
+            },
+            {
+              minute: "57",
+              hour: "19",
+              command: "{{service_cmd}}",
+              args: "bitbucket stop"
+            },
+            {
+              minute: "58",
+              hour: "19",
+              command: "{{service_cmd}}",
+              args: "postgresql stop"
+            },
+            {
+              minute: "35",
+              hour: "5",
+              command: "{{service_cmd}}",
+              args: "postgresql start"
+            }
+          ]
+      }
+  environment:
+    http_proxy: http://id:pass@your.proxy.name:port
+    https_proxy: http://id:pass@your.proxy.name:port

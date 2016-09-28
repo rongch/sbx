@@ -1,0 +1,68 @@
+#!/bin/sh
+
+# The following comment lines are used by the init setup script like the
+# chkconfig command for RedHat based distributions. Change as
+# appropriate for your installation.
+
+### BEGIN INIT INFO
+# Provides:          nexus-iq-server
+# Required-Start:    $local_fs $remote_fs $network $time $named
+# Required-Stop:     $local_fs $remote_fs $network $time $named
+# Default-Start:     3 5
+# Default-Stop:      0 1 2 6
+# Short-Description: nexus-iq-server service
+# Description:       Start the nexus-iq-server service
+### END INIT INFO
+
+NEXUS_IQ_SERVER_HOME=/opt/tools/nexus-iq-server
+VERSION={{ nexus_version }}
+JAVA_OPTIONS="-Xmx1024m -XX:MaxPermSize=128m"
+# The user ID which should be used to run the IQ Server
+# # IMPORTANT - Make sure that the user has the required privileges to write into the IQ Server work directory.
+RUN_AS_USER=iqserver
+APP_LONG_NAME="Nexus IQ Server"
+
+do_start()
+{
+    cd $NEXUS_IQ_SERVER_HOME
+    su -m $RUN_AS_USER -c "java -jar $JAVA_OPTIONS nexus-iq-server-$VERSION.jar server  config.yml > /dev/null 2>&1 &"
+    echo "Started nexus-iq-server"
+}
+
+do_console()
+{
+    cd $NEXUS_IQ_SERVER_HOME
+    java -jar $JAVA_OPTIONS nexus-iq-server-$VERSION.jar server config.yml
+}
+
+do_stop()
+{
+    pid=`ps aux | grep nexus-iq-server | grep -v grep | awk '{print $2}'`
+    kill $pid
+    echo "Killed nexus-iq-server - PID $pid"
+}
+
+do_status() 
+{
+    echo "If a process is listed, then sonatype-clm-server is running"
+    ps ax | grep java | grep nexus-iq-server
+
+}
+
+do_usage()
+{
+    echo "Usage: nexus-iq-server [console|start|stop]"
+}
+
+case $1 in
+console) do_console
+;;
+start) do_start
+;;
+stop) do_stop
+;;
+status) do_status
+;;
+*) do_usage
+;;
+esac

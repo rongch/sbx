@@ -1,0 +1,16 @@
+---
+
+#maven_repo_url: http://repos.fedorapeople.org/repos/dchen/apache-maven/epel-apache-maven.repo
+
+## Maven
+maven_install                            : true
+maven_version_major                      : '3' # Maven major version number
+maven_version_minor                      : '3' # Maven minor version number
+maven_version_patch                      : '9' # Maven patch version number
+maven_version                            : "{{ maven_version_major }}.{{ maven_version_minor }}.{{ maven_version_patch }}"
+maven_mirror                             : "http://archive.apache.org/dist/maven/maven-{{maven_version_major}}/{{ maven_version }}/binaries"
+maven_redis_sha256sum                    : '3a8dc4a12ab9f3607a1a2097bbab0150c947ad6719d8f1bb6d5b47d0fb0c4779'
+maven_bin_path                           : '/usr/local/bin'
+maven_install_dir                        : '/opt/maven'
+maven_redis_filename                     : "apache-maven-{{ maven_version }}-bin.tar.gz"
+

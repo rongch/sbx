@@ -1,0 +1,11 @@
+- hosts: nfsserver
+  remote_user: ec2-user
+  sudo: yes
+  vars_files:
+    - vars/mount
+  roles:
+    - nfs_server
+
+  #environment:
+     #http_proxy: http://id\pass@your.proxy.name:port
+    #https_proxy: http://id\pass@your.proxy.name:port

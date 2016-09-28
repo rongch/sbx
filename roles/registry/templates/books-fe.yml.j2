@@ -1,0 +1,14 @@
+blue:
+  ports:
+    - 8080
+  environment:
+    - SERVICE_NAME={{ alias }}books-fe-blue
+
+  image: vfarcic/books-fe
+green:
+  ports:
+    - 8080
+  environment:
+    - SERVICE_NAME={{ alias }}books-fe-green
+
+  image: vfarcic/books-fe

@@ -1,0 +1,7 @@
+- name: setup cron job
+  cron:
+    name="cron {{item.command}} {{item.args}}"
+    minute="{{item.minute}}"
+    hour="{{item.hour}}"
+    job="{{item.command}} {{item.args}}"
+  with_items: "{{cron_jobs}}"

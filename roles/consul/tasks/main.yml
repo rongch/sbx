@@ -1,0 +1,79 @@
+- name: consul Directories are present
+  file:
+    dest: "{{ item }}"
+    state: directory
+  with_items: "{{consul_directories}}"
+  tags: [consul]
+
+- name: Files are present
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode }}"
+  with_items: "{{files}}"
+  tags: [consul]
+
+- name: Watchers are present
+  copy:
+    src: watchers.json
+    dest: /etc/consul.d/watchers.json
+    mode: 0644
+  when: consul_master_ip is not defined
+  tags: [consul]
+
+- name: Templates are present
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode }}"
+  with_items: "{{templates}}"
+  tags: [consul]
+
+- name: Service is started
+  service:
+    name=consul
+    state=started
+    pattern=/usr/local/bin/consul
+  tags: [consul]
+
+- name: Node is in cluster
+  #shell: consul join {{ consul_master_ip }}
+  #args:
+  #  executable: /usr/local/bin
+  command: /usr/local/bin/consul join {{ consul_master_ip }}
+  when: consul_master_ip is defined
+  tags: [consul]
+
+- name: Configurations are present
+  template:
+    src: consul_check.json.j2
+    dest: /etc/consul.d/consul_check.json
+  register: result
+  tags: [consul]
+
+- name: Consul is restarted
+  shell: killall -HUP consul
+  when: result|changed
+  tags: [consul]
+
+- name: Registrator is running
+  docker:
+    name: registrator
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock
+    hostname: "{{ hostname }}"
+    image: gliderlabs/registrator
+    command: -ip {{ ip }} consul://{{ ip }}:8500
+    restart_policy: always
+  tags: [consul]
+
+- name: Registrator KV is running
+  docker:
+    name: registrator-kv
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock
+    hostname: "{{ hostname }}"
+    image: gliderlabs/registrator
+    command: -ip {{ ip }} consulkv://{{ ip }}:8500/services
+    restart_policy: always
+  tags: [consul]

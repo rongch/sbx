@@ -1,0 +1,104 @@
+- name: import oss vars
+  include_vars: nexus-oss.yml
+  when: nexus_type=="oss"
+- name: import oss vars
+  include_vars: nexus-oss.yml
+  when: nexus_type=="pro"
+
+- name: Download nexus3
+  #command: "wget -q -O {{ archive }} --continue --no-check-certificate --no-cookies {{ url }} creates={{archive}}"
+  get_url: url={{ nexus_download_url }} dest="{{ nexus_download_dir }}/{{ nexus_package }}" mode=0755
+  tags: [nexus3]
+
+- name: Ensure Nexus o/s group exists
+  group: name="{{ nexus_os_group }}" state=present
+  when: nexus_create_os_group
+  tags: [nexus3]
+
+- name: Ensure Nexus o/s user exists
+  user: name="{{ nexus_os_user }}" group="{{ nexus_os_group }}" shell="{{ nexus_os_user_shell }}" state=present
+  when: nexus_create_os_user
+  tags: [nexus3]
+
+- name: Ensure Nexus installation directory exists
+  file:
+    path="{{ nexus_installation_dir }}"
+    state="directory"
+  tags: [nexus3]
+
+- name: Unpack Nexus download
+  unarchive:
+    src="{{ nexus_download_dir }}/{{ nexus_package }}"
+    dest="{{ nexus_installation_dir }}"
+    creates="{{ nexus_installation_dir }}/nexus-{{ nexus_version }}"
+    force=no
+    copy=false
+    owner={{ nexus_os_user }}
+    group={{ nexus_os_group }}
+  tags: [nexus3]
+
+#- name: Clean up
+#  file: state=absent path="{{ nexus_download_dir }}/{{ nexus_package }}"
+#  tags: [nexus3]
+
+- name: Update symlink nexus-latest
+  shell: "ln -fs `ls -d {{ nexus_installation_dir }}/nexus-*|tail -1` {{ nexus_home }}"
+  #shell: "ln -fs {{ nexus_installation_dir }}/nexus-professional-{{nexus_version}} {{ nexus_home }}"
+  register: link_created
+  tags: [nexus2]
+
+- name: Install createrepo for nexus-yum-repository-plugin
+  yum: name=createrepo state=installed
+  when: ansible_os_family == "RedHat"
+
+#- name: Check if sonatype working directory exists
+#  stat: path="{{ nexus_installation_dir }}/sonatype-work"
+#  register: s_w
+
+#- name: Move existing sonatype working directory into specified working dir
+#  command: mv "{{ nexus_installation_dir }}/sonatype-work" "{{ nexus_working_dir }}"
+#  when: s_w.stat.exists
+
+#- name: Set permissions and ownership on Nexus installation directory
+#  file:
+#    path={{ nexus_installation_dir }}/{{ nexus_package }}
+#    state="directory"
+#    owner="{{ nexus_os_user }}"
+#    group="{{ nexus_os_group }}"
+#    mode="0755"
+#    recurse=true
+
+#- name: Copy the /etc/init.d/nexus file
+#  template: src=init-nexus.j2 dest=/etc/init.d/nexus owner=root group=root mode=0755 backup=yes
+#  #when: ansible_os_family == "RedHat"
+#  notify:
+#    - 'restart nexus'
+- name: create /etc/init.d/nexus
+  shell: "ln -s {{ nexus_home }}/bin/nexus /etc/init.d/nexus"
+  tags: [nexus3]
+
+- name: Copy the /etc/nginx/conf.d/nexus.conf file
+  template: src=nexus_nginx.conf.j2 dest=/etc/nginx/conf.d/nexus.conf owner=root group=root mode=0755 backup=yes
+  when: nginx_proxy
+  notify:
+    - 'reload nginx'
+
+- name: Register service with chkconfig system
+  service: name=nexus enabled=yes
+
+- name: Set service start/stop order
+  command: chkconfig --add nexus
+  when: ansible_os_family == "RedHat"
+
+- name: Set service start/stop order
+  #command: chkconfig nexus reset
+  command: chkconfig --levels 345 nexus on
+  when: ansible_os_family == "RedHat"
+
+- name: Set service start/stop order
+  command: update-rc.d nexus defaults
+  when: ansible_os_family == "Debian"
+
+- name: Start Nexus
+  service: name=nexus state=started
+

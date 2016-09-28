@@ -1,0 +1,7 @@
+---
+registry_cert_directory:
+  - /usr/local/share/ca-certificates/docker-dev-cert
+
+registry_cert: [
+  { src: "devdockerCA.crt", dest: "/usr/local/share/ca-certificates/docker-dev-cert/devdockerCA.crt" }
+]

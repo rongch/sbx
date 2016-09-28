@@ -1,0 +1,32 @@
+---
+nginx_proxy: True
+
+bitbucket_archive: atlassian-bitbucket-4.5.2.tar.gz
+bitbucket_catalina: /usr/share/bitbucket
+bitbucket_checksum: "sha256:eb93ede7c4bcaded79540f555062d9f1e79ab0da1615feca1e679cd7094eecd5"
+bitbucket_connector_port: 7990
+bitbucket_context_path: ~
+bitbucket_gid: ~
+bitbucket_hash_salt: BeiVawa2ongiegip
+bitbucket_home: /var/lib/bitbucket
+bitbucket_jvm_maximum_memory: 1024m
+bitbucket_jvm_minimum_memory: 512m
+bitbucket_jvm_support_recommended_args: -Datlassian.plugins.enable.wait=300
+bitbucket_pass: {{ password }}
+bitbucket_proxy_name: ~
+bitbucket_scheme: ~
+bitbucket_server_port: 8006
+bitbucket_uid: ~
+bitbucket_url: "https://downloads.atlassian.com/software/stash/downloads/{{ bitbucket_archive }}"
+bitbucket_user: {{ bitbucket_user }}
+
+# postgres
+jdbc_driver                        : "postgresql" # postgres, h2 or mysql
+jdbc_host                          : "127.0.0.1"
+jdbc_port                          : 5432 # h2 default is 9092 postgresql 5432 and mysql is 3306
+jdbc_user                          : "bitbucket"
+jdbc_pass                          : "bitbucket"
+jdbc_db                            : bitbucket
+#psq_schema                         : sonar ## PostgreSQL account has permissions to access multiple schemas (check documentation)
+postgres_sudo_user                 : postgres
+

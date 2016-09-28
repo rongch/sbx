@@ -1,0 +1,23 @@
+node_directories:
+  - /usr/local/share/ca-certificates/docker-dev-cert
+  - /root/.docker
+
+# 1st file is for talking to registry, it's not needed if use a public, trusted CA in registry
+# 2nd contains credential to log in to registry to pull images, ansible run as root, 
+#   so it resides in root's home 
+node_files: [
+  {
+      src: "devdockerCA.crt",
+      dest: "/usr/local/share/ca-certificates/docker-dev-cert/devdockerCA.crt",
+      mode: "0644"
+  },
+  {
+      src: "registry_auth_config.json",
+      dest: "/root/.docker/config.json",
+      mode: "0644"
+  }
+]
+
+images:
+  - www.my-registry.com/rong-jenkins-slave
+  - www.my-registry.com/rong-nodejs-slave

@@ -1,0 +1,72 @@
+- meta: flush_handlers
+  tags: [registry_client]
+
+#- name: node directories are present
+#  file:
+#    dest: "{{ item }}"
+#    state: directory
+#  with_items: node_directories
+#  tags: [registry_clent]
+#
+#- name: node files are present
+#  copy:
+#    src: "{{ item.src }}"
+#    dest: "{{ item.dest }}"
+#    mode: "{{ item.mode }}"
+#  with_items: node_files
+#  register: cert_copied
+#  tags: [registry_client]
+#
+#- name: add registry domain name to /etc/hosts file
+#  lineinfile: dest=/etc/hosts line="10.100.199.210 www.my-registry.com"
+#  tags: [registry_client]
+#
+#- name: update-ca-certificate
+#  shell: update-ca-certificates
+#  when: cert_copied|changed
+#  tags: [registry_client]
+#
+#- name: Docker Service is restarted
+#  service:
+#    name=docker
+#    state=restarted
+#  when: cert_copied|changed
+#  tags: [registry_client]
+#
+#- name: test docker command
+#  shell: docker images
+#  register: docker_cmd
+#  tags: [registry_client]
+#- debug: var=docker_cmd
+#
+#- name: login to my-registry
+#  docker_login:                     # module not installed in ansible 1.9.x, installed in 2.0.x. not tested.
+#    registry: https://www.my-registry.com
+#    username: "rong"
+#    password: "rong"
+#  register: login_result
+#- debug: var=login_result
+ 
+- name: get images
+  docker:
+    image: www.my-registry.com/rong-jenkins-slave
+    registry: https://www.my-registry.com
+    username: "rong"
+    email: ""
+    password: "rong"
+    state: stopped
+    pull: always
+#
+##- name: Log in registry server
+##  command: 'docker login -u rong -p rong https://www.my-registry.com'  # not work, command hangs
+##  register: registry_loggedin
+##  ignore_errors: True
+##  tags: [registry_client]
+##- debug: var=registry_loggedin
+
+#- name: Get jenkins-slave image
+#  shell: docker pull {{ item }}
+#  with_items: images
+#  register: result
+#  tags: [registry_client]
+#- debug: var=result

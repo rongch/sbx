@@ -1,0 +1,43 @@
+- hosts: nexus_clm
+  serial: 1
+  remote_user: vagrant
+  sudo: yes
+  vars:
+    domain_crt: nexusclm
+    domain_key: nexusclm
+
+  pre_tasks:
+    - set_fact:
+        service_cmd: "/sbin/service"
+      when: ansible_os_family == 'RedHat'
+    - set_fact:
+        service_cmd: "/usr/sbin/service"
+      when: ansible_os_family == 'Debian'
+
+  roles:
+    - oracle_java8
+    - nginx_proxy
+    - nexus_clm
+    - { role:
+          cron_jobs,
+          cron_jobs: [
+            {
+              name: "cron start sonatype-clm-server",
+              minute: "35",
+              hour: "5",
+              command: "{{service_cmd}}",
+              args: "sonatype-clm-server start"
+            },
+            {
+              name: "cron stop sonatype-clm-server",
+              minute: "58",
+              hour: "19",
+              command: "{{service_cmd}}",
+              args: "sonatype-clm-server stop"
+            }
+          ]
+      }
+
+  environment:
+    http_proxy: http://id\pass@your.proxy.name:port
+    https_proxy: http://id\pass@your.proxy.name:port

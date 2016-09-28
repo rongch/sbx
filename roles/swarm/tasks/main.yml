@@ -1,0 +1,92 @@
+#- name: include OS specific variables
+#  include_vars: {{ansible_os_family}}.yml
+#  tags: [swarm]
+
+- name: Directories are present
+  file:
+    dest: "{{ item }}"
+    state: directory
+  with_items: "{{master_directories}}"
+  when: swarm_master is defined
+  tags: [swarm]
+
+- name: Scripts are present
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: 0755
+  with_items: "{{master_scripts}}"
+  when: swarm_master is defined
+  tags: [swarm]
+
+- name: Obsolete Docker init.d service is removed
+  file:
+    dest: /etc/init.d/docker
+    state: absent
+  when: ansible_os_family == 'Debian'
+  tags: [swarm]
+
+- name: Docker docker.cfg Configuration is present for Ubuntu 14.4 Upstart
+  copy:
+    src: docker.cfg
+    dest: /etc/default/docker
+  register: config_result
+  when: not swarm_master is defined and ansible_os_family == 'Debian'
+  tags: [swarm]
+- debug: var=config_result
+
+- name: Docker DOCKER_OPTS config for RedHat/CentOS 6.7
+  lineinfile: 
+    dest=/etc/sysconfig/docker 
+    regexp='^other_args='
+    line='other_args="-H tcp://0.0.0.0:2375 -H unix:///var/run/docker.sock"' 
+  register: config_result
+  when: not swarm_master is defined and ansible_os_family == 'RedHat'
+- debug: var=config_result
+
+- name: Docker Service is restarted
+  service:
+    name=docker
+    state=restarted
+  when: config_result|changed
+  tags: [swarm]
+
+- name: Swarm master is running
+  docker:
+    name: swarm-master
+    image: swarm
+    ports: 2375:2375
+    command: manage consul://{{ ip }}:8500/swarm
+    restart_policy: always
+    env:
+      SERVICE_ID: swarm-master
+  when: swarm_master is defined
+  tags: [swarm]
+
+- name: Swarm node is running
+  docker:
+    name: swarm-node
+    image: swarm
+    command: join --addr={{ ip }}:2375 consul://{{ ip }}:8500/swarm
+    restart_policy: always
+  when: not swarm_master is defined
+  tags: [swarm]
+
+#- name: Compose is present
+#  shell: >
+#    curl -L \
+#    https://github.com/docker/compose/releases/download/1.2.0/docker-compose-`uname -s`-`uname -m` \
+#    > /usr/local/bin/docker-compose
+#  args:
+#    creates: /usr/local/bin/docker-compose
+#  when: swarm_master is defined
+#  tags: [swarm]
+#
+#- name: Setting permissions
+#  file:
+#    path: /usr/local/bin/docker-compose
+#    group: root
+#    owner: root
+#    mode: 0755
+#  when: swarm_master is defined
+#  tags: [swarm]

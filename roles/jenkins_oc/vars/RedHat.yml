@@ -1,0 +1,7 @@
+---
+#__jenkins_repo_url: http://pkg.jenkins-ci.org/redhat-stable/jenkins.repo
+__jenkins_repo_url: http://nectar-downloads.cloudbees.com/jenkins-operations-center/latest/rpm/jenkins-oc.repo
+#__jenkins_repo_key_url: http://pkg.jenkins-ci.org/redhat-stable/jenkins-ci.org.key
+__jenkins_repo_key_url: http://nectar-downloads.cloudbees.com/jenkins-operations-center/latest/rpm/cloudbees.com.key
+jenkins_init_file: /etc/sysconfig/jenkins-oc
+jenkins_http_port_param: JENKINS_PORT

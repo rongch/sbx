@@ -1,0 +1,2 @@
+nfs_server_mount: /nfs_share
+nfs_client_mount_point: /mnt/nfs_share

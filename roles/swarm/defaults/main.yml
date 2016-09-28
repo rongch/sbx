@@ -1,0 +1,13 @@
+master_directories:
+  - /data/scripts
+
+master_scripts: [
+  { src: "swarm_get_ip.sh", dest: "/data/scripts/swarm_get_ip.sh" }
+]
+
+#registry_cert_directory:
+#  - /usr/local/share/ca-certificates/docker-dev-cert
+
+#registry_cert: [
+#  { src: "devdockerCA.crt", dest: "/usr/local/share/ca-certificates/docker-dev-cert/devdockerCA.crt" }
+#]

@@ -1,0 +1,5 @@
+#OSS version:
+nexus_version: "3.0.0-m7"
+nexus_package: "nexus-{{ nexus_version }}-unix.tar.gz"
+nexus_download_url: "http://download.sonatype.com/nexus/3/{{ nexus_package }}"
+

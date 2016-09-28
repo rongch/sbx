@@ -1,0 +1,65 @@
+---
+- name: libselinux-python installd
+  yum: name=libselinux-python state=installed
+
+
+- name: Downloading and enable the EPEL repository definitions.
+  command: rpm -Uvh --replacepkgs http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
+  tags: [docker - centos]
+
+#- name: Download docker
+#  shell: "curl -fsSL https://get.docker.com/ | sh"
+#  #shell: "wget -qO- https://get.docker.com/ | sh"
+#  tags: [docker - centos]
+ 
+- name: Install Docker
+  yum: pkg=docker-io state=present
+  tags: [docker - centos]
+
+
+- name: add proxy to /etc/sysconfig/docker file
+  lineinfile: 
+    dest: /etc/sysconfig/docker
+    line: "{{item.line}}"
+  with_items:
+    - {line: "export HTTP_PROXY=\"{{http_proxy}}\""}
+    - {line: "export HTTPS_PROXY=\"{{https_proxy}}\""}
+  when: http_proxy is defined
+  tags: [docker - centos]
+
+#- name: add proxy to /etc/sysconfig/docker file
+  #lineinfile: dest=/etc/sysconfig/docker line="export HTTPS_PROXY={{ https_proxy }}"
+  #when: https_proxy is defined
+  #tags: [docker - centos]
+
+- name: Start service
+  service: name=docker state=started
+  tags: [docker - centos]
+
+- name: Python-pip is present
+  yum: name=python-pip state=present
+  tags: [docker - centos]
+
+- name: Docker-py is present
+  # docker-py 1.7.0 use docker client API 1.21, not work with docker server API 1.19
+  #pip: name=docker-py version=1.7.0 state=present 
+  # docker-py 1.2.3 work with docker server API 1.19. '--trusted-host' make pip use http request instead of https, because ssa proxy use https certificates that pypi does not take.
+  pip: name=docker-py version=1.2.3 state=present extra_args='--trusted-host pypi.python.org'
+  tags: [docker - centos]
+
+# Following are required when proxy intercept ssl and insert its cert in https communication
+- name: Add proxy root certificate to system trust store
+  copy:
+    src: treasure-ssa.crt
+    dest: /etc/pki/ca-trust/source/anchors/treasure.crt
+    mode: 0600
+  when: https_proxy is defined or http_proxy is defined
+- name: update-ca-certificate
+  shell: update-ca-trust force-enable && update-ca-trust extract
+  when: https_proxy is defined or http_proxy is defined
+  register: cert_updated
+  tags: [docker - centos]
+- name: restart docker service
+  service: name=docker state=restarted
+  when: cert_updated|changed
+  tags: [docker - centos]

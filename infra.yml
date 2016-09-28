@@ -1,0 +1,15 @@
+- include: nfs.yml
+#- include: registry.yml
+- include: jenkins.yml
+- include: nexus2.yml
+- include: nexus-clm.yml
+- include: sonar.yml
+- include: jenkins-oc.yml
+- include: jenkins-regular.yml
+- include: bitbucket.yml
+- include: elasticsearch.yml
+#- include: compose.yml
+#- include: swarm.yml
+#- include: nginx.yml
+#- include: consul.yml
+#- include: registry_nodes.yml

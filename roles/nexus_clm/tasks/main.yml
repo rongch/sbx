@@ -1,0 +1,100 @@
+# Variable setup.
+- name: Include OS-Specific variables
+  include_vars: "clm_1_20.yml"
+  when: nexus_version=="1.20.0-02"
+- name: Include OS-Specific variables
+  include_vars: "clm_1_21.yml"
+  when: nexus_version=="1.21.0-02"
+
+- name: Include OS-Specific variables
+  include_vars: "clm_1_15.yml"
+  when: nexus_version=="1.15.0-02"
+
+- name: Download nexus_clm
+  #command: "wget -q -O {{ archive }} --continue --no-check-certificate --no-cookies {{ url }} creates={{archive}}"
+  get_url: 
+    url="{{ nexus_download_url }}"
+    dest="{{ nexus_download_dir }}/{{ nexus_package }}"
+    mode=0755
+  tags: [nexus_clm]
+
+- name: Ensure Nexus o/s group exists
+  group: name="{{ nexus_os_group }}" state=present
+  when: nexus_create_os_group
+  tags: [nexus_clm]
+
+- name: Ensure Nexus o/s user exists
+  user: name="{{ nexus_os_user }}" group="{{ nexus_os_group }}" shell="{{ nexus_os_user_shell }}" state=present
+  when: nexus_create_os_user
+  tags: [nexus_clm]
+
+- name: Ensure Nexus installation directory exists
+  file:
+    path="{{ nexus_installation_dir }}"
+    state="directory"
+    owner="{{ nexus_os_user }}"
+    group="{{ nexus_os_group }}"
+    mode="0755"
+  tags: [nexus_clm]
+
+- name: Unpack Nexus download 
+  unarchive:  
+    src="{{ nexus_download_dir }}/{{ nexus_package }}"
+    dest="{{ nexus_installation_dir }}"
+    force=no
+    copy=false
+    owner={{ nexus_os_user }}
+    group={{ nexus_os_group }}
+    mode="0755"
+
+#- name: Clean up
+#  file: state=absent path="{{ nexus_download_dir }}/{{ nexus_package }}"
+#  tags: [nexus_clm]
+
+- name: Update symlink nexus-latest
+  shell: "ln -fs {{ nexus_installation_dir }} {{ nexus_home }}"
+  tags: [nexus_clm]
+
+- name: Install createrepo for nexus-yum-repository-plugin
+  yum: name=createrepo state=installed
+  when: ansible_os_family == "RedHat"
+
+
+#- name: Set permissions and ownership on Nexus installation directory
+#  file:
+#    path={{ nexus_installation_dir }}/{{ nexus_package }}
+#    state="directory"
+#    owner="{{ nexus_os_user }}"
+#    group="{{ nexus_os_group }}"
+#    mode="0755"
+#    recurse=true
+
+- name: Copy the /etc/init.d/nexus file
+  template: src={{nexus_init_src}} dest={{nexus_init_dest}} owner=root group=root mode=0755 backup=yes
+  notify:
+    - 'restart nexus_clm'
+
+- name: Copy the /etc/nginx/conf.d/nexusclm.conf file
+  template: src=nexusclm_nginx.conf.j2 dest=/etc/nginx/conf.d/nexusclm.conf owner=root group=root mode=0755 backup=yes
+  when: nginx_proxy
+  notify:
+    - 'reload nginx'
+
+- name: Register service with chkconfig system
+  service: name={{nexus_service}} enabled=yes
+
+- name: Set service start/stop order
+  command: chkconfig --add {{nexus_service}}
+  when: ansible_os_family == "RedHat"
+
+- name: Set service start/stop order
+  command: chkconfig --levels 345 {{nexus_service}} on
+  when: ansible_os_family == "RedHat"
+
+- name: Set service start/stop order
+  command: update-rc.d {{nexus_service}} defaults
+  when: ansible_os_family == "Debian"
+
+- name: Start Nexus
+  service: name={{nexus_service}} state=started
+

@@ -1,0 +1,35 @@
+ports:
+  - '80:80'
+
+directories:
+  - /data/nginx/conf.d
+  - /data/nginx/includes
+  - /data/nginx/logs
+  - /data/nginx/upstreams
+  - /data/nginx/templates
+  - /data/nginx/servers
+
+volumes:
+  - /data/nginx/conf.d:/etc/nginx/conf.d
+  - /data/nginx/includes:/etc/nginx/includes
+  - /data/nginx/upstreams:/etc/nginx/upstreams
+  - /data/nginx/servers:/etc/nginx/servers
+  - /data/nginx/logs:/var/log/nginx
+
+templates: [
+  {src: 'services.conf.j2', dest: '/data/nginx/conf.d/services.conf'}
+]
+
+nginx_proxy: True
+nexus_download_dir: "/tmp"
+nexus_type: "oss"   # 'oss' or 'pro'
+
+nexus_installation_dir: "/opt"
+nexus_home: "{{ nexus_installation_dir }}/nexus"
+#nexus_working_dir: "/var/nexus"
+nexus_port: 9999
+nexus_create_os_user: true
+nexus_os_user: "nexus"
+nexus_create_os_group: "{{ nexus_create_os_user | bool }}"
+nexus_os_group: "nexus"
+nexus_os_user_shell: "/bin/bash"

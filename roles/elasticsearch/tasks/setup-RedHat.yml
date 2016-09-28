@@ -1,0 +1,19 @@
+---
+- name: libselinux-python installd
+  yum: name=libselinux-python state=installed
+
+- name: Add Elasticsearch GPG key.
+  rpm_key:
+    key: https://packages.elastic.co/GPG-KEY-elasticsearch
+    state: present
+    validate_certs: no
+
+- name: Add Elasticsearch repository.
+  copy:
+    src: elasticsearch-{{version}}.repo
+    dest: /etc/yum.repos.d/elasticsearch.repo
+    mode: 0644
+
+- name: Install Elasticsearch.
+  yum: pkg=elasticsearch state=installed
+

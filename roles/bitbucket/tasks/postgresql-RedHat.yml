@@ -1,0 +1,39 @@
+- name: libselinux-python installd
+  yum: name=libselinux-python state=installed
+
+- name: ensure packages are installed -- RedHat
+  yum: name={{item}} state=present update_cache=yes
+  with_items:
+    - postgresql
+    - postgresql-server
+    - postgresql-libs
+    - python-psycopg2
+  tags: postgresql_server
+  when: ansible_os_family == "RedHat"
+
+- name: Initiate database
+  command: service postgresql initdb
+           creates=/var/lib/pgsql/data/postgresql.conf
+  when: ansible_os_family == "RedHat"
+
+- name: Ensure PostgreSQL is listening on all localhost
+  lineinfile: dest=/var/lib/pgsql/data/postgresql.conf
+              regexp='^#?listen_addresses\s*='
+              line="listen_addresses = '127.0.0.1'"
+              state=present
+  notify: restart postgresql
+  when: ansible_os_family == "RedHat"
+
+- lineinfile: dest=/var/lib/pgsql/data/pg_hba.conf
+              regexp='host\s+all\s+all\s+127.0.0.1/32\s+'
+              line='host all all 127.0.0.1/32 md5'
+              insertbefore=BOF
+  notify: restart postgresql
+  when: ansible_os_family == "RedHat"
+
+- name: Start PostgreSQL and enable at boot
+  service: name=postgresql
+           enabled=yes
+           state=started
+  when: ansible_os_family == "RedHat"
+

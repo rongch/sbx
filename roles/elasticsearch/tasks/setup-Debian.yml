@@ -1,0 +1,19 @@
+---
+- name: Add Elasticsearch apt key.
+  apt_key:
+    url: https://packages.elastic.co/GPG-KEY-elasticsearch
+    state: present
+
+- name: Add Elasticsearch repository.
+  apt_repository:
+    repo: 'deb http://packages.elastic.co/elasticsearch/2.x/debian stable main'
+    state: present
+    update_cache: yes
+
+- name: Install Elasticsearch.
+  apt: pkg=elasticsearch state=present
+
+- name: cron stop elasticsearch
+  cron: name="stop elasticsearch service" minute="58" hour="19" job="/usr/sbin/service elasticsearch stop"
+- name: cron start elasticsearch
+  cron: name="start elasticsearch service" minute="35" hour="5" job="/usr/sbin/service elasticsearch start"

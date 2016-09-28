@@ -1,0 +1,38 @@
+- hosts: elasticsearch
+  remote_user: ec2-user
+  #remote_user: vagrant
+  sudo: yes
+
+  pre_tasks:
+    - set_fact:
+        service_cmd: "/sbin/service"
+      when: ansible_os_family == 'RedHat'
+    - set_fact:
+        service_cmd: "/usr/sbin/service"
+      when: ansible_os_family == 'Debian'
+
+  roles:
+    - oracle_java8
+    - elasticsearch
+    - { role:
+          cron_jobs,
+          cron_jobs: [
+            {
+              minute: "34",
+              hour: "5",
+              command: "{{service_cmd}}",
+              args: "elasticsearch start"
+            },
+            {
+              minute: "59",
+              hour: "19",
+              command: "{{service_cmd}}",
+              args: "elasticsearch stop"
+            }
+          ]
+      }
+
+  environment:
+    http_proxy: http://id\pass@your.proxy.name:port
+    https_proxy: http://id\pass@your.proxy.name:port
+

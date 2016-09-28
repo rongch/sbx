@@ -1,0 +1,41 @@
+- name: Node directory is present
+  file:
+    path: /data/jenkins/slaves/cd
+    state: directory
+    mode: 0777
+  tags: [jenkins]
+
+- name: Job directories are present
+  file:
+    path: '{{ jenkins_base_dir }}/jobs/{{ item.dest }}'
+    state: directory
+  with_items: jenkins_jobs
+  tags: [jenkins]
+
+- name: Build jobs are present
+  template:
+    src: '{{ item.src }}'
+    dest: '{{ jenkins_base_dir }}/jobs/{{ item.dest }}/config.xml'
+    backup: yes
+  with_items: jenkins_jobs
+  tags: [jenkins]
+
+- name: Container is running
+  docker:
+    name: jenkins
+    image: jenkins
+    #image: vfarcic/jenkins
+    # docker-py's default client API version may be later than 
+    # Docker server API version, set auto or the same number as Docker Server API
+    docker_api_version: 1.19  
+    ports: 8080:8080
+    restart_policy: always
+    volumes:
+      - "{{ jenkins_base_dir }}:/jenkins"
+    env:
+      SERVICE_ID: jenkins
+  tags: [jenkins]
+
+- name: Reload
+  shell: docker restart jenkins
+  tags: [jenkins, reload]

@@ -1,0 +1,44 @@
+- hosts: nexus2
+  serial: 1
+  remote_user: ec2-user
+  #remote_user: vagrant
+  sudo: yes
+  vars:
+    domain_crt: nexuspro
+    domain_key: nexuspro
+
+  pre_tasks:
+    - set_fact:
+        service_cmd: "/sbin/service"
+      when: ansible_os_family == 'RedHat'
+    - set_fact:
+        service_cmd: "/usr/sbin/service"
+      when: ansible_os_family == 'Debian'
+
+  roles:
+    - oracle_java8
+    - nginx_proxy
+    - nexus2
+    - { role:
+          cron_jobs,
+          cron_jobs: [
+            {
+              name: "nexus",
+              minute: "35",
+              hour: "5",
+              command: "{{service_cmd}}",
+              args: "nexus start"
+            },
+            {
+              name: "nexus",
+              minute: "58",
+              hour: "19",
+              command: "{{service_cmd}}",
+              args: "nexus stop"
+            }
+          ]
+      }
+  
+  environment:
+    http_proxy: http://id\pass@your.proxy.name:port
+    https_proxy: http://id\pass@your.proxy.name:port

@@ -1,0 +1,10 @@
+---
+- name: Ensure Maven repo is installed.
+  get_url:
+    url: "{{ maven_repo_url }}"
+    dest: /etc/yum.repos.d/epel-apache-maven.repo
+
+- name: Ensure Maven is installed.
+  yum: pkg=apache-maven state=installed
+  register: install_result
+

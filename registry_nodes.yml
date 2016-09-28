@@ -1,0 +1,6 @@
+- hosts: registry_nodes
+  remote_user: vagrant
+  sudo: yes
+  roles:
+    - docker
+    - registry_client
